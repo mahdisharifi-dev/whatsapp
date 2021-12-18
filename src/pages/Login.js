@@ -4,17 +4,30 @@ import { GoogleLogin } from 'react-google-login';
 import { useDispatch } from 'react-redux';
 import { setAuthStatus, setUser } from '../store/slices/userSlice';
 import { useNavigate } from 'react-router-dom';
+import Parse from 'parse/dist/parse.min.js';
 
 export default function Login() {
 
     const dispatch = useDispatch();
     const navigate = useNavigate()
 
-    const onGoogleSuccess = (response) => {
-        dispatch(setUser(response.profileObj));
-        dispatch(setAuthStatus('VALID'));
-        localStorage.setItem('GOOGLE-OAUTH-TOKEN', response.tokenObj.accessToken);
-        navigate('/');
+    const onGoogleSuccess = async (response) => {
+        const user = new Parse.User();
+        user.set('username', response.profileObj.email);
+        user.set('email', response.profileObj.email);
+        user.set('name', response.profileObj.name);
+        user.set('imageUrl', response.profileObj.imageUrl);
+        try {
+            await user.linkWith('google', {
+                authData: { id: response.googleId, id_token: response.tokenId },
+            });
+            dispatch(setUser(response.profileObj));
+            dispatch(setAuthStatus('VALID'));
+            localStorage.setItem('GOOGLE-OAUTH-TOKEN', response.accessToken);
+            navigate('/');
+        } catch {
+            alert('error');
+        }
     }
 
     const onGoogleFaild = (response) => {

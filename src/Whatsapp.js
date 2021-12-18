@@ -4,38 +4,30 @@ import {
     BrowserRouter as Router,
     Routes,
     Route,
-    useNavigate,
     Navigate
 } from "react-router-dom";
 import Login from "./pages/Login";
 import Main from "./pages/Main";
 import { GoogleLogin } from 'react-google-login';
 import { setAuthStatus, setUser } from './store/slices/userSlice';
+import Chat from './pages/Chat';
+import Intro from './pages/Intro';
 
 export default function Whatsapp() {
 
     const authStatus = useSelector((state) => state.user.authStatus);
 
     const dispatch = useDispatch();
-    // const navigate = useNavigate();
 
     useEffect(() => {
         if (!localStorage.getItem('GOOGLE-OAUTH-TOKEN')) {
             dispatch(setAuthStatus('INVALID'));
-            // navigate('/login');
         }
     })
 
     const onGoogleSuccess = (response) => {
-        const { googleId, name, email, imageUrl } = response.profileObj;
-        console.log(response)
-        dispatch(setUser({
-            googleId,
-            name,
-            email,
-            imageUrl
-        }));
-        dispatch(setAuthStatus('VALID'))
+        dispatch(setUser(response.profileObj));
+        dispatch(setAuthStatus('VALID'));
     }
 
     const onGoogleFaild = (response) => {
@@ -55,11 +47,14 @@ export default function Whatsapp() {
             {
                 authStatus === 'PENDING' ? 'loading' : (
                     <Routes>
-                        {authStatus === 'INVALID' && <Route path={'/login'} element={Login} />}
-                        {/* {authStatus === 'INVALID' && <Route path="/" render={() => <Navigate to="/login" replace />} />} */}
-                        {
-                            authStatus === 'VALID' && <Route path="/" element={<Main />} />
-                        }
+                        {authStatus === 'INVALID' && <Route path='/login' element={<Login />} />}
+                        {authStatus === 'INVALID' && <Route path="*" element={<Navigate to='/login' />} />}
+                        {authStatus === 'VALID' && (
+                            <Route path="/" element={<Main />}>
+                                <Route path="/" element={<Intro />} />
+                                <Route path="/chat" element={<Chat />} />
+                            </Route>
+                        )}
                     </Routes>
                 )
             }
