@@ -5,31 +5,33 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux'
 import { Outlet } from 'react-router-dom';
+import ChatCard from '../components/ChatCard';
+import ContactSkeleton from '../components/ContactSkeleton';
 import { setAuthStatus, setUser } from '../store/slices/userSlice';
 
-export default function Main(props) {
+export default function Main() {
     const user = useSelector((state) => state.user.user);
     const dispatch = useDispatch();
-    const [users, setUsers] = useState(undefined);
+    const [chats, setChats] = useState(undefined);
     useEffect(() => {
-        const query = new Parse.Query('User');
+        const query = new Parse.Query('Chat');
+        // query.containedIn('users', [user.id]);
         query.find().then((response) => {
-            setUsers(response.filter((item) => item.get('username') !== user.email));
-        })
+            setChats(response);
+        });
     }, []);
     const handleLogout = () => {
-        localStorage.removeItem('GOOGLE-OAUTH-TOKEN');
-        dispatch(setUser(null));
+        Parse.User.logOut();
         dispatch(setAuthStatus('INVALID'));
     }
     return (
         <React.Fragment>
             <div className='h-screen relative p-16 bg-gray-100'>
                 <div className='bg-white shadow-md w-full h-full flex'>
-                    <div className='w-60 bg-white h-full flex flex-col'>
+                    <div className='w-60 bg-white h-full flex flex-col border-r border-gray-300'>
                         <div className='w-full h-16 bg-gray-200'>
                             <div className='flex justify-between items-center h-full p-4'>
-                                <img src={user.imageUrl} alt={user.name} className='w-10 rounded-full' />
+                                <img src={Parse.User.current().get("imageUrl")} alt={Parse.User.current().get('name')} className='w-10 rounded-full' />
                                 <div className='flex'>
                                     <FontAwesomeIcon icon={faComment} className='text-gray-400' />
                                     <FontAwesomeIcon icon={faSignOutAlt} className='text-gray-400 ml-4 cursor-pointer' onClick={handleLogout} />
@@ -42,12 +44,7 @@ export default function Main(props) {
                         </div>
                         <div className='w-ful flex-1 overflow-auto'>
                             {
-                                users ? users.length ? users.map((item) => (
-                                    <div key={item.get('username')} className='px-4 py-3 cursor-pointer transition-all flex items-center border-b border-gray-200 hover:bg-gray-200'>
-                                        <img src={item.get('imageUrl')} alt={item.get('imageUrl')} className='w-10 rounded-full mr-2' />
-                                        <span className='text-gray-800 font-bold text-sm'>{item.get('name')}</span>
-                                    </div>
-                                )) : 'no contact' : 'loading'
+                                chats ? chats.length ? chats.map((item) => <ChatCard chat={item} />) : 'no contact' : Array.from(Array(5).keys()).map(() => <ContactSkeleton />)
                             }
                         </div>
                     </div>

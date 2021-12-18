@@ -8,57 +8,47 @@ import {
 } from "react-router-dom";
 import Login from "./pages/Login";
 import Main from "./pages/Main";
-import { GoogleLogin } from 'react-google-login';
-import { setAuthStatus, setUser } from './store/slices/userSlice';
+import { setAuthStatus } from './store/slices/userSlice';
 import Chat from './pages/Chat';
 import Intro from './pages/Intro';
+import Parse from 'parse/dist/parse.min.js';
 
 export default function Whatsapp() {
 
     const authStatus = useSelector((state) => state.user.authStatus);
-
     const dispatch = useDispatch();
 
     useEffect(() => {
-        if (!localStorage.getItem('GOOGLE-OAUTH-TOKEN')) {
+        if (!Parse.User.current()) {
             dispatch(setAuthStatus('INVALID'));
+        } else {
+            dispatch(setAuthStatus('VALID'));
         }
-    })
+    }, []);
 
-    const onGoogleSuccess = (response) => {
-        dispatch(setUser(response.profileObj));
-        dispatch(setAuthStatus('VALID'));
-    }
-
-    const onGoogleFaild = (response) => {
-        console.log(response);
-    }
     return (
         <Router>
-            <GoogleLogin
-                clientId="355099773482-gt2aiicupmumi36f4c2v4nre3lcgjnqd.apps.googleusercontent.com"
-                onSuccess={onGoogleSuccess}
-                onFailure={onGoogleFaild}
-                cookiePolicy={'single_host_origin'}
-                render={renderProps => null}
-                isSignedIn={true}
-            />
-
             {
                 authStatus === 'PENDING' ? 'loading' : (
                     <Routes>
-                        {authStatus === 'INVALID' && <Route path='/login' element={<Login />} />}
-                        {authStatus === 'INVALID' && <Route path="*" element={<Navigate to='/login' />} />}
+                        {authStatus === 'INVALID' && (
+                            <>
+                                <Route path='/login' element={<Login />} />
+                                <Route path="*" element={<Navigate to='/login' />} />
+                            </>
+                        )}
                         {authStatus === 'VALID' && (
-                            <Route path="/" element={<Main />}>
-                                <Route path="/" element={<Intro />} />
-                                <Route path="/chat" element={<Chat />} />
-                            </Route>
+                            <>
+                                <Route path="/" element={<Main />}>
+                                    <Route path="/" element={<Intro />} />
+                                    <Route path="/chat/:id" element={<Chat />} />
+                                </Route>
+                                <Route path="/login" element={<Navigate to='/' />} />
+                            </>
                         )}
                     </Routes>
                 )
             }
-
         </Router>
     )
 }

@@ -21,9 +21,7 @@ export default function Login() {
             await user.linkWith('google', {
                 authData: { id: response.googleId, id_token: response.tokenId },
             });
-            dispatch(setUser(response.profileObj));
             dispatch(setAuthStatus('VALID'));
-            localStorage.setItem('GOOGLE-OAUTH-TOKEN', response.accessToken);
             navigate('/');
         } catch {
             alert('error');
