@@ -46,6 +46,7 @@ export default function Main() {
                             {
                                 chats ? chats.length ? chats.map((item) => <ChatCard chat={item} />) : 'no contact' : Array.from(Array(5).keys()).map(() => <ContactSkeleton />)
                             }
+                            <button class="block bg-red-400">Create Chat</button>
                         </div>
                     </div>
                     {
